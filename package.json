@@ -1,6 +1,6 @@
 {
   "name": "@cloudwise/cw-confluence-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local MCP server giving Claude Code structured, authenticated access to Confluence Cloud.",
   "author": "Yannick Wensink",
   "license": "MIT",

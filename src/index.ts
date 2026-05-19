@@ -5,7 +5,7 @@ import { ConfluenceClient } from "./confluence/client.js";
 import { logger } from "./shared/logger.js";
 import { registerTools } from "./tools/register.js";
 
-const SERVER_VERSION = '0.1.0';
+const SERVER_VERSION = '0.1.1';
 
 async function main(): Promise<void> {
   process.stderr.write("cw-confluence-mcp starting (stdio)…\n");
