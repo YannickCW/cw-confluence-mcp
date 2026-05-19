@@ -428,7 +428,7 @@ describe("comment_create — footer paths", () => {
     expect((postInit as RequestInit).method).toBe("POST");
     const body = JSON.parse((postInit as RequestInit).body as string) as Record<string, unknown>;
     expect(body.parentCommentId).toBe("F1");
-    expect(body.pageId).toBe("777");
+    expect(body.pageId).toBeUndefined();
   });
 
   it("creates an inline reply when parent_id points at an inline comment", async () => {
