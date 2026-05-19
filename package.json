@@ -1,7 +1,20 @@
 {
-  "name": "cw-confluence-mcp",
+  "name": "@cloudwise/cw-confluence-mcp",
   "version": "0.1.0",
   "description": "Local MCP server giving Claude Code structured, authenticated access to Confluence Cloud.",
+  "author": "Yannick Wensink",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "confluence",
+    "atlassian",
+    "cloudwise"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YannickCW/cw-confluence-mcp.git"
+  },
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
@@ -10,19 +23,26 @@
     "cw-confluence-mcp": "./bin/cw-confluence-mcp.js"
   },
   "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://pkgs.dev.azure.com/heutinkict/MOO/_packaging/MOO.Shared/npm/registry/"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",
     "test": "vitest run --dir tests/unit",
     "test:integration": "vitest run --dir tests/integration",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "sync-version": "node scripts/sync-version.mjs",
+    "prebuild": "npm run sync-version",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run lint && npm test"
   },
-  "files": [
-    "dist",
-    "bin",
-    "README.md"
-  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@napi-rs/keyring": "^1.1.7",
