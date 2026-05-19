@@ -265,7 +265,6 @@ export async function createComment(
     const parent = await getComment(client, { comment_id: args.parent_id });
     if (!parent.ok) return parent;
     const body = {
-      pageId: args.page_id,
       parentCommentId: args.parent_id,
       body: { representation: "storage", value: args.body_storage },
     };
