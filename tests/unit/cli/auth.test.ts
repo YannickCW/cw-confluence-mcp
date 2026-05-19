@@ -144,13 +144,14 @@ describe("auth login", () => {
     const written = h.writeCreds.mock.calls[0]![0] as CredentialsBlob;
     expect(written.site).toBe("cloudwise.atlassian.net");
 
-    // The verify call must have hit the normalised URL.
+    // The verify call must have hit the normalised URL. v1 is primary because
+    // Confluence Cloud v2 has no `/users/current` endpoint.
     const url = h.fetchImpl.mock.calls[0]![0] as string;
-    expect(url).toBe("https://cloudwise.atlassian.net/wiki/api/v2/users/current");
+    expect(url).toBe("https://cloudwise.atlassian.net/wiki/rest/api/user/current");
     assertNoTokenLeak(h);
   });
 
-  it("falls back to v1 /user/current when v2 returns 404", async () => {
+  it("falls back to v2 /users/current if v1 unexpectedly 404s", async () => {
     const h = makeHarness();
     h.prompts.mockResolvedValueOnce({
       site: "cloudwise.atlassian.net",
@@ -159,19 +160,19 @@ describe("auth login", () => {
     });
     h.fetchImpl
       .mockResolvedValueOnce(jsonResponse(404, { message: "Not Found" }))
-      .mockResolvedValueOnce(jsonResponse(200, { displayName: "Yannick V1" }));
+      .mockResolvedValueOnce(jsonResponse(200, { displayName: "Yannick V2" }));
 
     await runAuthCli(["login"], h.deps);
 
     expect(h.fetchImpl).toHaveBeenCalledTimes(2);
     expect(h.fetchImpl.mock.calls[0]![0]).toBe(
-      "https://cloudwise.atlassian.net/wiki/api/v2/users/current",
-    );
-    expect(h.fetchImpl.mock.calls[1]![0]).toBe(
       "https://cloudwise.atlassian.net/wiki/rest/api/user/current",
     );
+    expect(h.fetchImpl.mock.calls[1]![0]).toBe(
+      "https://cloudwise.atlassian.net/wiki/api/v2/users/current",
+    );
     expect(h.writeCreds).toHaveBeenCalledTimes(1);
-    expect(h.stdout.buf.join("")).toContain("Logged in as Yannick V1");
+    expect(h.stdout.buf.join("")).toContain("Logged in as Yannick V2");
     expect(h.exit).toHaveBeenCalledWith(0);
     assertNoTokenLeak(h);
   });
@@ -331,7 +332,7 @@ describe("auth test", () => {
     assertNoTokenLeak(h);
   });
 
-  it("falls back to v1 on 404 just like login", async () => {
+  it("falls back to v2 on 404 just like login", async () => {
     const h = makeHarness({
       storedCreds: {
         site: "cloudwise.atlassian.net",

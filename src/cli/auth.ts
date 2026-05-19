@@ -194,37 +194,39 @@ async function verifyCredentials(
   site: string,
   email: string,
 ): Promise<VerifyResult> {
-  // Primary: v2 /users/current. If Confluence 404s the v2 path (some tenants don't
-  // expose it yet), fall back to v1 /user/current — same shape for our purposes.
-  const v2Res = await client.v2<UsersCurrentV2>("/users/current");
-  if (v2Res.ok) {
+  // Primary: v1 /user/current. Confluence Cloud v2 has no current-user endpoint —
+  // /wiki/api/v2/users/current routes through a content-type handler that parses
+  // "users" as a content-type slug and 400s. v1 has been stable for years.
+  const v1Res = await client.v1<UserCurrentV1>("/user/current");
+  if (v1Res.ok) {
     return {
       ok: true,
       user: {
-        displayName: pickDisplayName(v2Res.data) ?? email,
+        displayName: pickDisplayName(v1Res.data) ?? email,
         email,
         site,
       },
     };
   }
 
-  // v1 fallback only for 404 (v2 endpoint missing on this tenant).
-  if (v2Res.error.status === 404) {
-    const v1Res = await client.v1<UserCurrentV1>("/user/current");
-    if (v1Res.ok) {
+  // Defensive fallback: if a future tenant ever deprecates v1, try v2.
+  // Kept narrow (404 only) so we don't mask real auth errors with a confusing v2 retry.
+  if (v1Res.error.status === 404) {
+    const v2Res = await client.v2<UsersCurrentV2>("/users/current");
+    if (v2Res.ok) {
       return {
         ok: true,
         user: {
-          displayName: pickDisplayName(v1Res.data) ?? email,
+          displayName: pickDisplayName(v2Res.data) ?? email,
           email,
           site,
         },
       };
     }
-    return { ok: false, message: v1Res.error.message };
+    return { ok: false, message: v2Res.error.message };
   }
 
-  return { ok: false, message: v2Res.error.message };
+  return { ok: false, message: v1Res.error.message };
 }
 
 function pickDisplayName(u: { displayName?: string; publicName?: string } | undefined): string | undefined {

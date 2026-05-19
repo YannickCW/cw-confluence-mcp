@@ -113,5 +113,21 @@ export async function runAuthCli(args: string[], deps?: AuthCliDeps): Promise<vo
     }
   }
 
+  // Defensive stdin teardown — `prompts` puts the TTY into raw mode for the
+  // masked password input. On Windows + Node 24, calling `process.exit()` while
+  // raw mode is still active can trip a libuv assertion
+  // (`!(handle->flags & UV_HANDLE_CLOSING)`). Restore cooked mode and pause
+  // stdin before exiting so libuv tears handles down in a quiescent state.
+  try {
+    const stdin = process.stdin as NodeJS.ReadStream & { isTTY?: boolean; isRaw?: boolean };
+    if (stdin.isTTY) {
+      if (typeof stdin.setRawMode === "function") stdin.setRawMode(false);
+      stdin.pause();
+      stdin.unref();
+    }
+  } catch {
+    // Best-effort cleanup; never let teardown errors clobber the real exit code.
+  }
+
   resolved.exit(exitCode);
 }
